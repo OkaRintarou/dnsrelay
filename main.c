@@ -8,6 +8,10 @@
 
 
 int main(int argc, char *argv[]) {
+    setbuf(stdout, NULL);
+
+    start_time = clock();
+
     getArgs(argc, argv);
 
     list = loadFromFile(fileName);
@@ -16,10 +20,13 @@ int main(int argc, char *argv[]) {
     if (debug) {
         printf("configuration file name: %s\n", fileName);
         printf("configuration dnsServer IP: %s\n", dnsServerIP);
+        printf("---------------------------------------\n");
         printf("AA IP:\n");
         printAll(list);
+        printf("---------------------------------------\n");
         printf("TMP IP:\n");
         printAll(listTmp);
+        printf("---------------------------------------\n");
     }
 
     WSADATA wsaData;
@@ -87,7 +94,7 @@ int main(int argc, char *argv[]) {
                 WaitForSingleObject(hMutexThread, INFINITE);
                 int n = findEmpty(threadUsed);
                 if (n == -1) {
-                    printf("No thread for this query!\n");
+                    printf("%lf No thread for this query!\n", get_time());
                 } else {
                     client->threadNum = n;
                     threadUsed[n] = 1;
@@ -99,7 +106,7 @@ int main(int argc, char *argv[]) {
                 WaitForSingleObject(hMutexMsg, INFINITE);
                 int n = findAns(ID);
                 if (n == -1) {
-                    printf("ID not found!\n");
+                    printf("%lf ID not found!\n", get_time());
                 } else {
                     memcpy(answer[n], recvBuffer, result);
                     ansLen[n] = result;
@@ -136,15 +143,17 @@ int main(int argc, char *argv[]) {
     }
 
     if (debug) {
+        printf("---------------------------------------\n");
         printf("TMP list now is:\n");
         printAll(listTmp);
+        printf("---------------------------------------\n");
     }
 
     writeToFile("listTmp.txt", listTmp);
     freeAll(list);
     freeAll(listTmp);
 
-    printf("Server is closed.");
+    printf("Server is closed.\n");
 
     return 0;
 }

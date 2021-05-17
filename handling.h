@@ -2,6 +2,7 @@
 #define DNSRELAY_HANDLING_H
 
 #include <winsock2.h>
+#include <time.h>
 #include "arrayList.h"
 
 #define ERR -1
@@ -37,6 +38,8 @@ extern char *fileName;
 extern char *dnsServerIP;
 extern int debug;
 
+extern clock_t start_time;
+
 typedef struct Client {
     SOCKADDR_IN clientAddr;
     char recvBuffer[512];
@@ -58,9 +61,9 @@ int findAns(short ID);
 
 void releaseSign();
 
-short getID(char *msg);
+unsigned short getID(char *msg);
 
-void setID(short ID, char *buffer);
+void setID(unsigned short ID, char *buffer);
 
 void setNotFound(char *buffer);
 
@@ -84,8 +87,9 @@ char *skipName(char *buffer);
 
 int judgePointer(const char *buffer);
 
-extern void getArgs(int argc, char *argv[]);
+void getArgs(int argc, char *argv[]);
 
+double get_time(void);
 
 #endif //DNSRELAY_HANDLING_H
 

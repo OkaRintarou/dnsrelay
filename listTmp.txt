@@ -6,3 +6,4 @@ data.hicloud.com 49.4.33.228
 logservice.hicloud.com 49.4.44.227
 logservice1.hicloud.com 49.4.44.227
 zyx.qq.com 14.215.152.236
+163.com 123.58.180.8

@@ -32,6 +32,8 @@ char *fileName = "list.txt";
 char *dnsServerIP = "8.8.8.8";
 int debug = 0;
 
+clock_t start_time = 0;
+
 unsigned __stdcall keyListener(void *flag) {
     char buffer[5];
     WaitForSingleObject(hMutexFlag, INFINITE);
@@ -50,11 +52,11 @@ unsigned handlingClient(void *pArguments) {
     Client *client = (Client *) pArguments;
 
     char *recvBuff = client->recvBuffer;
-    short originID = getID(recvBuff);
-    short newID = (short) client->threadNum;
+    unsigned short originID = getID(recvBuff);
+    unsigned short newID = (unsigned short) client->threadNum;
     setID(newID, recvBuff);
 
-    printf("Thread[%d] gets Query.\n", client->threadNum);
+    printf("%lf Thread[%d] gets Query. ID: %hd\n", get_time(), client->threadNum, originID);
 
     char name[200];
     int count;
@@ -62,7 +64,8 @@ unsigned handlingClient(void *pArguments) {
     int flagGetName = getName(name, recvBuff, client->n);
     if (flagGetName == 0) {
         if (debug)
-            printf("Thread[%d] gets Query: %s\n", client->threadNum, name);
+            printf("%lf Thread[%d] gets Query: %s from %s\n", get_time(), client->threadNum, name,
+                   inet_ntoa(client->clientAddr.sin_addr));
         WaitForSingleObject(hMutexList, INFINITE);
         NodePtr found = findNode(list, name);
         ReleaseMutex(hMutexList);
@@ -83,7 +86,7 @@ unsigned handlingClient(void *pArguments) {
                 if (AAFlag)
                     setAA(recvBuff);
             }
-            printf("Thread[%d] sends Answer.\n", client->threadNum);
+            printf("%lf Thread[%d] sends Answer.\n", get_time(), client->threadNum);
             sendto(sock, recvBuff, count, 0, (SOCKADDR *) &client->clientAddr, sizeof(client->clientAddr));
         } else {
             WaitForSingleObject(hMutexMsg, INFINITE);
@@ -107,20 +110,20 @@ unsigned handlingClient(void *pArguments) {
                     WaitForSingleObject(hMutexList, INFINITE);
                     addNodeToList(listTmp, name, IP);
                     if (debug)
-                        printf("Thread[%d] gets tmp ip: %s %s\n", client->threadNum, name, IP);
+                        printf("%lf Thread[%d] gets tmp ip: %s %s\n", get_time(), client->threadNum, name, IP);
                 }
                 ReleaseMutex(hMutexList);
                 ReleaseMutex(hMutexMsg);
-                printf("Thread[%d] sends Answer.\n", client->threadNum);
+                printf("%lf Thread[%d] sends Answer.\n", get_time(), client->threadNum);
                 ReleaseMutex(hMutexSock);
                 releaseM[client->threadNum] = 1;
                 ReleaseMutex(hMutexSigns[client->threadNum]);
             } else {
-                printf("Thread[%d] timeout!!!\n", client->threadNum);
+                printf("%lf Thread[%d] timeout!!!\n", get_time(), client->threadNum);
             }
         }
     } else {
-        printf("Thread[%d] ERROR!!!\n", client->threadNum);
+        printf("%lf Thread[%d] ERROR!!!\n", get_time(), client->threadNum);
     }
 
     WaitForSingleObject(hMutexThread, INFINITE);
@@ -143,7 +146,7 @@ void closeThread() {
     for (int i = 0; i < 10; ++i) {
         if (needClose[i] == 1) {
             CloseHandle(cThread[i]);
-            printf("Thread[%d] is closed.\n", i);
+            printf("%lf Thread[%d] is closed.\n", get_time(), i);
             needClose[i] = 0;
             threadUsed[i] = 0;
         }
@@ -177,14 +180,14 @@ int classifyMsg(const char *msg, int n) {
         return QUE;
 }
 
-short getID(char *msg) {
+unsigned short getID(char *msg) {
     char buffer[2];
     memcpy(buffer, msg + 1, 1);
     memcpy(buffer + 1, msg, 1);
-    return *(short *) buffer;
+    return *(unsigned short *) buffer;
 }
 
-void setID(short ID, char *buffer) {
+void setID(unsigned short ID, char *buffer) {
     char *id = (char *) &ID;
     memcpy(buffer, id + 1, 1);
     memcpy(buffer + 1, id, 1);
@@ -309,3 +312,7 @@ void getArgs(int argc, char **argv) {
         dnsServerIP = argv[3];
 }
 
+double get_time(void) {
+    clock_t end_time = clock();
+    return (double) (end_time - start_time) / CLOCKS_PER_SEC;
+}
