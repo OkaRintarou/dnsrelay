@@ -289,7 +289,7 @@ char *skipName(char *buffer) {
             return buffer;
         }
         if (*buffer == 0)
-            return buffer;
+            return buffer + 1;
         buffer += 1;
     }
 }
